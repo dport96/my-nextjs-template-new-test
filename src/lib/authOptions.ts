@@ -1,7 +1,5 @@
-import { compare } from 'bcrypt';
 import type { NextAuthConfig } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { prisma } from '@/lib/prisma';
 
 type AuthUser = {
   id: string;

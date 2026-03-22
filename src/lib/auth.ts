@@ -21,9 +21,16 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        // Type guard for credentials
+        if (
+          !credentials ||
+          typeof credentials.email !== 'string' ||
+          typeof credentials.password !== 'string'
+        ) {
+          return null;
+        }
         const user = await prisma.user.findUnique({ where: { email: credentials.email } });
-        if (!user) return null;
+        if (!user || typeof user.password !== 'string') return null;
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
         // Return user object for session
@@ -46,13 +53,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         ...session,
         user: {
           ...session.user,
-          role: token.role,
+          role: (token as { role?: string }).role,
         },
       };
     },
-    jwt({ token, account }) {
-      if (account) {
-        token.role = account.role;
+    jwt({ token, user }) {
+      // user is type: { id?: string; email?: string; name?: string; role?: string }
+      if (user && typeof (user as { role?: string }).role === 'string') {
+        token.role = (user as { role?: string }).role;
       }
       return token;
     },
